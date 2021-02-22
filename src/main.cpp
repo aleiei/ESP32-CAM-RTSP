@@ -14,15 +14,6 @@
    SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
    ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
    OR OTHER DEALINGS IN THE SOFTWARE.
-   
-   Description:
-   Simple I2S MEMS microphone Audio Streaming via UDP transmitter
-   Needs a UDP listener like netcat on port 16500 on listener PC
-   Needs a SoX with mp3 handler for Recorder
-   Under Linux for listener:
-   netcat -u -p 16500 -l | play -t raw -r 16000 -b 16 -c 2 -e signed-integer -
-   Under Linux for recorder (give for file.mp3 the name you prefer) : 
-   netcat -u -p 16500 -l | rec -t raw -r 16000 -b 16 -c 2 -e signed-integer - file.mp3
 */
 
 #include <Arduino.h>
