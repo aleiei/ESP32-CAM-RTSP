@@ -38,7 +38,7 @@ CStreamer::~CStreamer()
 void CStreamer::addSession(WiFiClient& aClient)
 {
     // printf("CStreamer::addSession\n");
-    CRtspSession* session = new CRtspSession(aClient, this); // our threads RTSP session and state
+    //CRtspSession* session = new CRtspSession(aClient, this); // our threads RTSP session and state
     // we have it stored in m_Clients
 }
 
