@@ -1,0 +1,21 @@
+{
+  "name": "RTSP",
+  "keywords": "esp32-cam, rtsp",
+  "description": "Recompiled RTSP server for ESP32_CAM AI Thinker to free UP Flash",
+  "repository":
+  {
+    "type": "library",
+    "url": "https://github.com/aleiei/ESP32-CAM-RTSP/tree/master/lib/RTSP"
+  },
+  "authors":
+  [
+    {
+      "name": "Alessandro Orlando",
+      "url": "https://github.com/aleiei",
+      "maintainer": true
+    }
+  ],
+  "version": "0.1.7",
+  "frameworks": "arduino",
+  "platforms": "*"
+}
