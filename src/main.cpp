@@ -45,8 +45,8 @@
 #define PCLK_GPIO_NUM 22
 
 //WIFI SETTINGS.
-#define WIFI_SSID  "WebPocket-C038"
-#define WIFI_PASSWD "M45BGQM5"
+#define WIFI_SSID  "Your_SSID"
+#define WIFI_PASSWD "Your_PASS"
 
 
 CAM32 cam;
