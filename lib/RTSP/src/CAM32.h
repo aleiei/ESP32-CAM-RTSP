@@ -1,5 +1,5 @@
-#ifndef OV2640_H_
-#define OV2640_H_
+#ifndef CAM32_H_
+#define CAM32_H_
 
 #include <Arduino.h>
 #include <pgmspace.h>
@@ -8,15 +8,15 @@
 #include "esp_attr.h"
 #include "esp_camera.h"
 
-extern camera_config_t esp32cam_config, esp32cam_aithinker_config, esp32cam_ttgo_t_config;
+extern camera_config_t esp32cam_aithinker_config;
 
-class OV2640
+class CAM32
 {
 public:
-    OV2640(){
+    CAM32(){
         fb = NULL;
     };
-    ~OV2640(){
+    ~CAM32(){
     };
     esp_err_t init(camera_config_t config);
     void done(void);
@@ -41,4 +41,4 @@ private:
     camera_fb_t *fb;
 };
 
-#endif //OV2640_H_
+#endif //CAM32_H_

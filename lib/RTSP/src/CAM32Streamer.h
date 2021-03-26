@@ -1,15 +1,15 @@
 #pragma once
 
 #include "CStreamer.h"
-#include "OV2640.h"
+#include "CAM32.h"
 
-class OV2640Streamer : public CStreamer
+class CAM32Streamer : public CStreamer
 {
     bool m_showBig;
-    OV2640 &m_cam;
+    CAM32 &m_cam;
 
 public:
-    OV2640Streamer(OV2640 &cam);
+    CAM32Streamer(CAM32 &cam);
 
     virtual void    streamImage(uint32_t curMsec);
 };

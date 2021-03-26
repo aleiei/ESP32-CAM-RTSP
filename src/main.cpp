@@ -21,12 +21,12 @@
 #include <WebServer.h>
 #include <WiFiClient.h>
 
-// Micro-RTSP Library
+//RTSP Library
 #include "SimStreamer.h"
-#include "OV2640Streamer.h"
+#include "CAM32Streamer.h"
 #include "CRtspSession.h"
 
-//AI Thinker ESP32 CAM PINS
+//ESP32 CAM PINS
 #define PWDN_GPIO_NUM 32
 #define RESET_GPIO_NUM -1
 #define XCLK_GPIO_NUM 0
@@ -44,17 +44,16 @@
 #define HREF_GPIO_NUM 23
 #define PCLK_GPIO_NUM 22
 
-// WIFI SETTINGS.
-#define WIFI_SSID  "Your_SSID"
-#define WIFI_PASSWD "YOUR_PASS"
+//WIFI SETTINGS.
+#define WIFI_SSID  "WebPocket-C038"
+#define WIFI_PASSWD "M45BGQM5"
 
 
-OV2640 cam;
+CAM32 cam;
 CStreamer *streamer;
+WiFiServer rtspServer(554); //RTSP default transport layer port.
 
-WiFiServer rtspServer(554); // RTSP default transport layer port.
-
-// STATIC IP.
+//STATIC IP.
 IPAddress local_IP(192, 168, 1, 10);
 IPAddress gateway(192, 168, 1, 1);
 IPAddress subnet(255, 255, 255, 0);
@@ -62,9 +61,9 @@ IPAddress subnet(255, 255, 255, 0);
 void setupWiFi() {
   IPAddress ip;
   
-  // Configures static IP address
+  //Configures static IP address
   if (!WiFi.config(local_IP, gateway, subnet)) {
-    Serial.println("Failed to configure IP");
+      Serial.println("Failed to configure IP");
   }
   
   WiFi.begin(WIFI_SSID, WIFI_PASSWD);
@@ -102,7 +101,6 @@ void setupCamera() {
   config.xclk_freq_hz = 20000000;
   config.pixel_format = PIXFORMAT_JPEG; //PIXFORMAT_YUV422 PIXFORMAT_GRAYSCALE PIXFORMAT_RGB565 PIXFORMAT_JPEG
  
-
   /*
   FRAMESIZE_UXGA (1600 x 1200)
   FRAMESIZE_QVGA (320 x 240)
@@ -113,25 +111,15 @@ void setupCamera() {
   FRAMESIZE_SXGA (1280 x 1024)
   */
 
-  if(psramFound()){
-    Serial.println("psram found");
-    config.frame_size = FRAMESIZE_VGA;
-    config.jpeg_quality = 10; //10-63 lower number means higher quality
-    config.fb_count = 2;
-  } else {
-    Serial.println("psram not found");
-    config.frame_size = FRAMESIZE_VGA;
-    config.jpeg_quality = 12;
-    config.fb_count = 1;
-  }
-
+  config.frame_size = FRAMESIZE_XGA;
+  config.jpeg_quality = 10; //10-63 lower number means higher quality
+  config.fb_count = 1;
   cam.init(config);
 }
 
 void setupStreaming() {
     rtspServer.begin();  
-    //streamer = new SimStreamer(true);             // our streamer for UDP/TCP based RTP transport
-    streamer = new OV2640Streamer(cam);             // our streamer for UDP/TCP based RTP transport
+    streamer = new CAM32Streamer(cam); //Streamer for UDP/TCP based RTP transport
 }
 
 void handleStreaming() {
@@ -167,7 +155,7 @@ void handleStreaming() {
 void setup()
 {
   Serial.begin(115200);
-  while (!Serial);            //wait for serial connection.
+  while (!Serial);//Wait for serial connection.
   setupCamera();
   setupWiFi();   
   setupStreaming();
