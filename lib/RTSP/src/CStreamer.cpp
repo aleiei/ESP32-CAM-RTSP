@@ -5,7 +5,7 @@
 
 CStreamer::CStreamer(u_short width, u_short height) : m_Clients()
 {
-    printf("Creating TSP streamer\n");
+    printf("Creating RTSP streamer\n");
     m_RtpServerPort  = 0;
     m_RtcpServerPort = 0;
 
