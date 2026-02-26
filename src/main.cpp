@@ -18,7 +18,6 @@
 
 #include <Arduino.h>
 #include <WiFi.h>
-#include <WebServer.h>
 #include <WiFiClient.h>
 
 //RTSP Library
@@ -50,7 +49,7 @@
 
 
 CAM32 cam;
-CStreamer *streamer;
+CStreamer *streamer = nullptr;
 WiFiServer rtspServer(554); //RTSP default transport layer port.
 
 //STATIC IP.
@@ -59,22 +58,30 @@ IPAddress gateway(192, 168, 1, 1);
 IPAddress subnet(255, 255, 255, 0);
 
 void setupWiFi() {
-  IPAddress ip;
-  
-  //Configures static IP address
+  // try to use the configured static address, but don't block if it fails
   if (!WiFi.config(local_IP, gateway, subnet)) {
-      Serial.println("Failed to configure IP");
+      Serial.println("Warning: failed to configure static IP, using DHCP");
   }
-  
+
   WiFi.begin(WIFI_SSID, WIFI_PASSWD);
-  while (WiFi.status() != WL_CONNECTED) {
+
+  unsigned long start = millis();
+  const unsigned long timeout = 20000; // 20 seconds
+  Serial.print("Connecting to WiFi");
+  while (WiFi.status() != WL_CONNECTED && (millis() - start) < timeout) {
       delay(500);
       Serial.print(".");
   }
-  
-  Serial.println("");
-  Serial.println("WiFi connected");
-  Serial.println("IP address: ");
+
+  if (WiFi.status() != WL_CONNECTED) {
+      Serial.println("\nERROR: could not connect to WiFi");
+      // let the caller decide what to do; we simply return so setup() can
+      // continue (the stream code will simply never accept clients).
+      return;
+  }
+
+  Serial.println("\nWiFi connected");
+  Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
 }
 
@@ -114,7 +121,15 @@ void setupCamera() {
   config.frame_size = FRAMESIZE_XGA;
   config.jpeg_quality = 10; //10-63 lower number means higher quality
   config.fb_count = 1;
-  cam.init(config);
+
+  esp_err_t err = cam.init(config);
+  if (err != ESP_OK) {
+      Serial.printf("Camera initialization failed (err=%d)\n", err);
+      // halt here, nothing can proceed without a working camera
+      while (true) {
+          delay(1000);
+      }
+  }
 }
 
 void setupStreaming() {
@@ -123,31 +138,34 @@ void setupStreaming() {
 }
 
 void handleStreaming() {
-    uint32_t msecPerFrame = 100;
+    const uint32_t msecPerFrame = 100;
     static uint32_t lastimage = millis();
 
-    // If we have an active client connection, just service that until gone
-    streamer->handleRequests(0); // we don't use a timeout here,
-    // instead we send only if we have new enough frames
+    if (!streamer)
+        return;
+
+    // service any existing sessions first
+    streamer->handleRequests(0);
+
     uint32_t now = millis();
-    if(streamer->anySessions()) {
-        if(now > lastimage + msecPerFrame || now < lastimage) { // handle clock rollover
+    if (streamer->anySessions()) {
+        // use subtraction to correctly handle rollover
+        if ((now - lastimage) >= msecPerFrame) {
             streamer->streamImage(now);
             lastimage = now;
 
-            // check if we are overrunning our max frame rate
-            now = millis();
-            if(now > lastimage + msecPerFrame) {
-                printf("warning exceeding max frame rate of %d ms\n", now - lastimage);
+            // re-check immediately to see if streamImage took too long
+            uint32_t later = millis();
+            if ((later - now) > msecPerFrame) {
+                Serial.printf("warning: exceeding max frame rate by %u ms\n", later - now);
             }
         }
     }
-    
+
     WiFiClient rtspClient = rtspServer.accept();
-    if(rtspClient) {
+    if (rtspClient) {
         Serial.print("client: ");
-        Serial.print(rtspClient.remoteIP());
-        Serial.println();
+        Serial.println(rtspClient.remoteIP());
         streamer->addSession(rtspClient);
     }
 }
@@ -155,9 +173,9 @@ void handleStreaming() {
 void setup()
 {
   Serial.begin(115200);
-  while (!Serial);//Wait for serial connection.
+  delay(100); // give serial port a moment to initialise
   setupCamera();
-  setupWiFi();   
+  setupWiFi();
   setupStreaming();
 }
 
