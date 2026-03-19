@@ -20,12 +20,10 @@
 #include <WiFi.h>
 #include <WiFiClient.h>
 
-//RTSP Library
 #include "SimStreamer.h"
 #include "CAM32Streamer.h"
 #include "CRtspSession.h"
 
-//ESP32 CAM PINS
 #define PWDN_GPIO_NUM 32
 #define RESET_GPIO_NUM -1
 #define XCLK_GPIO_NUM 0
@@ -42,23 +40,18 @@
 #define VSYNC_GPIO_NUM 25
 #define HREF_GPIO_NUM 23
 #define PCLK_GPIO_NUM 22
-
-//WIFI SETTINGS.
 #define WIFI_SSID  "Your_SSID"
 #define WIFI_PASSWD "Your_PASS"
 
 
 CAM32 cam;
 CStreamer *streamer = nullptr;
-WiFiServer rtspServer(554); //RTSP default transport layer port.
-
-//STATIC IP.
+WiFiServer rtspServer(554);
 IPAddress local_IP(192, 168, 1, 10);
 IPAddress gateway(192, 168, 1, 1);
 IPAddress subnet(255, 255, 255, 0);
 
 void setupWiFi() {
-  // try to use the configured static address, but don't block if it fails
   if (!WiFi.config(local_IP, gateway, subnet)) {
       Serial.println("Warning: failed to configure static IP, using DHCP");
   }
@@ -66,7 +59,7 @@ void setupWiFi() {
   WiFi.begin(WIFI_SSID, WIFI_PASSWD);
 
   unsigned long start = millis();
-  const unsigned long timeout = 20000; // 20 seconds
+  const unsigned long timeout = 20000;
   Serial.print("Connecting to WiFi");
   while (WiFi.status() != WL_CONNECTED && (millis() - start) < timeout) {
       delay(500);
@@ -75,8 +68,6 @@ void setupWiFi() {
 
   if (WiFi.status() != WL_CONNECTED) {
       Serial.println("\nERROR: could not connect to WiFi");
-      // let the caller decide what to do; we simply return so setup() can
-      // continue (the stream code will simply never accept clients).
       return;
   }
 
@@ -125,7 +116,6 @@ void setupCamera() {
   esp_err_t err = cam.init(config);
   if (err != ESP_OK) {
       Serial.printf("Camera initialization failed (err=%d)\n", err);
-      // halt here, nothing can proceed without a working camera
       while (true) {
           delay(1000);
       }
@@ -134,7 +124,7 @@ void setupCamera() {
 
 void setupStreaming() {
     rtspServer.begin();  
-    streamer = new CAM32Streamer(cam); //Streamer for UDP/TCP based RTP transport
+    streamer = new CAM32Streamer(cam);
 }
 
 void handleStreaming() {
@@ -144,17 +134,15 @@ void handleStreaming() {
     if (!streamer)
         return;
 
-    // service any existing sessions first
+    
     streamer->handleRequests(0);
 
     uint32_t now = millis();
     if (streamer->anySessions()) {
-        // use subtraction to correctly handle rollover
         if ((now - lastimage) >= msecPerFrame) {
             streamer->streamImage(now);
             lastimage = now;
 
-            // re-check immediately to see if streamImage took too long
             uint32_t later = millis();
             if ((later - now) > msecPerFrame) {
                 Serial.printf("warning: exceeding max frame rate by %u ms\n", later - now);
@@ -173,7 +161,7 @@ void handleStreaming() {
 void setup()
 {
   Serial.begin(115200);
-  delay(100); // give serial port a moment to initialise
+  delay(100);
   setupCamera();
   setupWiFi();
   setupStreaming();
